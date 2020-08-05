@@ -3,7 +3,7 @@ package main
 import (
     "context"
     "fmt"
-	"time"
+    "time"
 )
 
 
@@ -11,8 +11,8 @@ type futureInterface interface {
     Cancel()
     Cancelled() bool
     Done() bool
-    result() (interface{}, error)
-    resultUntil(d time.Duration) (interface{}, bool, error)
+    Result() (interface{}, error)
+    ResultUntil(d time.Duration) (interface{}, bool, error)
     doneCallBack(func(interface{}) (interface{}, error)) futureInterface
 }
 
@@ -57,7 +57,7 @@ type futureStruct struct {
 func (f *futureStruct) Cancel() {
 	select {
 	case <-f.done:
-		return
+	    return
 	case <-f.cancelChan:
 		return
 	default:
@@ -68,7 +68,7 @@ func (f *futureStruct) Cancel() {
 func (f *futureStruct) Cancelled() bool {
 	select {
 	case <-f.cancelChan:
-		return true
+	    return true
 	default:
 		return false
 	}
@@ -86,7 +86,7 @@ func (f *futureStruct) Done() bool {
     return false
 }
 
-func (f *futureStruct) result() (interface{}, error) {
+func (f *futureStruct) Result() (interface{}, error) {
 	select {
 	case <-f.done:
 		return f.val, f.err
@@ -95,10 +95,10 @@ func (f *futureStruct) result() (interface{}, error) {
 	return nil, nil
 }
 
-func (f *futureStruct) resultUntil(d time.Duration) (interface{}, bool, error) {
+func (f *futureStruct) ResultUntil(d time.Duration) (interface{}, bool, error) {
 	select {
 	case <-f.done:
-		val, err := f.result()
+		val, err := f.Result()
 		return val, false, err
 	case <-time.After(d):
 		return nil, true, nil
@@ -109,7 +109,7 @@ func (f *futureStruct) resultUntil(d time.Duration) (interface{}, bool, error) {
 
 func (f *futureStruct) doneCallBack(next func(interface{}) (interface{}, error)) futureInterface {
 	nextFuture := newInner(f.cancelChan, f.cancelFunc, func() (interface{}, error) {
-		result, err := f.result()
+		result, err := f.Result()
 		if f.Cancelled() || err != nil {
 			return result, err
 		}
@@ -137,14 +137,14 @@ func main(){
    		time.Sleep(2 * time.Second)
    		f.Cancel()
    	}()
-    result, err := f.result()
+    result, err := f.Result()
    	fmt.Println(result, err, f.Cancelled())
 
     // Checking get call
     g := New(func() (interface{}, error) {
        		return longTimeFunc(tempVal)
        	})
-    gResult, gErr := g.result()
+    gResult, gErr := g.Result()
 
    	fmt.Println(g.Done(), gResult, gErr, g.Cancelled())
 }
